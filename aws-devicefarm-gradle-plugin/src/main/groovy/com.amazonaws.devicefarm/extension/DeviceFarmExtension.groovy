@@ -85,6 +85,12 @@ class DeviceFarmExtension {
      */
     ConfiguredTest test = new InstrumentationTest();
 
+    /**
+     * [Optional] Wait for DeviceFarm to finish running the tests and consume results
+     * Default: False
+     */
+    boolean waitForResult = false
+
     DeviceFarmExtension(final Project project) {
         this.project = project;
     }

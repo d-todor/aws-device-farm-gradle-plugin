@@ -22,6 +22,7 @@ import com.amazonaws.services.devicefarm.model.BillingMethod;
 import com.amazonaws.services.devicefarm.model.DevicePool;
 import com.amazonaws.services.devicefarm.model.ExecutionConfiguration;
 import com.amazonaws.services.devicefarm.model.Project;
+import com.amazonaws.services.devicefarm.model.Run;
 import com.amazonaws.services.devicefarm.model.ScheduleRunConfiguration;
 import com.amazonaws.services.devicefarm.model.ScheduleRunRequest;
 import com.amazonaws.services.devicefarm.model.ScheduleRunResult;
@@ -30,6 +31,7 @@ import com.amazonaws.services.devicefarm.model.Upload;
 import com.amazonaws.services.devicefarm.model.UploadType;
 import com.android.builder.testing.api.TestServer;
 import com.google.common.collect.Lists;
+
 import org.gradle.api.logging.Logger;
 
 import java.io.File;
@@ -115,7 +117,7 @@ public class DeviceFarmServer extends TestServer {
                 .withType(extension.getTest().getTestType())
                 .withFilter(extension.getTest().getFilter())
                 .withTestPackageArn(uploadTestPackageIfNeeded(project, testPackage))
-                .withTestSpecArn(testSpec == null ? null: testSpec.getArn());
+                .withTestSpecArn(testSpec == null ? null : testSpec.getArn());
 
 
         runTest.addParametersEntry(RUNPARAM_APP_PERF_MONITORING, Boolean.toString(extension.getPerformanceMonitoring()));
@@ -145,6 +147,15 @@ public class DeviceFarmServer extends TestServer {
 
         logger.lifecycle(String.format("View the %s run in the AWS Device Farm Console: %s",
                 runTest.getType(), utils.getRunUrlFromArn(response.getRun().getArn())));
+
+        if (extension.isWaitForResult()) {
+            DeviceFarmResultPoller poller = new DeviceFarmResultPoller(extension, logger, api, utils);
+            try {
+                poller.pollTestRunForArn(response.getRun().getArn());
+            } catch (InterruptedException e) {
+                logger.error(e.getMessage(), e);
+            }
+        }
     }
 
     /**
